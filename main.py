@@ -11,5 +11,5 @@ app = Flask(__name__)
 
 
 @app.route('/')
-def index
+def index():
     return "<body>cool dude!</body>"
