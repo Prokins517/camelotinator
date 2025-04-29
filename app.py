@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -13,3 +13,8 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return render_template("index.html")
+
+@app.route('/message', methods=["POST"])
+def message():
+    message = request.form.get("message", "You did not enter a message.")
+    return render_template("message.html", message=message)

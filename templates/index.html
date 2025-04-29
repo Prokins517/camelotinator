@@ -1,13 +1,9 @@
-<!DOCTYPE html>
+{% extends "layout.html" %}
 
-<html>
-    
-    <head>
-        <title>index page</title>
-    </head>
-
-    <body>
+{% block body %}
         This is the index page.
-    </body>
-
-</html>
+        <form action="/message" method="post">
+        <input autocomplete="off" autofocus name="message" type="text" placeholder="Enter message here.">
+        <button type="submit" >Send</button> 
+        </form>
+{% endblock %}
