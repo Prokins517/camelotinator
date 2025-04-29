@@ -1,0 +1,11 @@
+from flask import Flask
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="cba82416e2334bc99ac19671adbb9308",
+                                               client_secret="2bc032351c8c42df8eb629b19cf2896f",
+                                               redirect_uri="http://127.0.0.1:5000/callback",
+                                               scope="user-library-read"))
+
+app = Flask(__name__)
+
