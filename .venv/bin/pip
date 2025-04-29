@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/Users/jonathanperkins/Documents/Coding Projects/Camelotinator/.venv/bin/python3" "$0" "$@"
-' '''
+#!/Users/jonathanperkins/Documents/GitHub/camelotinator/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
