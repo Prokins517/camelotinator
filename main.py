@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -12,4 +12,4 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "<body>cool dude!</body>"
+    return render_template("index.html")
