@@ -9,3 +9,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="cba82416e2334bc99ac196
 
 app = Flask(__name__)
 
+
+@app.route('/')
+def index
+    return "<body>cool dude!</body>"
