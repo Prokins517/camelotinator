@@ -18,3 +18,12 @@ def index():
 def message():
     message = request.form.get("message", "You did not enter a message.")
     return render_template("message.html", message=message)
+
+@app.route('/login')
+def login():
+    return render_template("login.html")
+
+@app.route('/camelotify')
+def camelotify():
+    return render_template("camelotify.html")
+
