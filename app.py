@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request, session, redirect, url_for
 import spotipy
+from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 
@@ -26,6 +27,8 @@ def log_check():
     token_info = cache_handler.get_cached_token()
     return sp_oauth.validate_token(token_info)
 
+sp = Spotify(auth_manager=sp_oauth)
+
 @app.route('/')
 def index():
     return render_template("index.html")
@@ -46,10 +49,10 @@ def login():
 def camelotify():
     if not log_check():
         return redirect(url_for('login'))
-    
+    playlists_list = sp.current_user_playlists
 
 
-    
+
     return render_template("camelotify.html")
 
 @app.route('/callback')
