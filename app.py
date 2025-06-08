@@ -41,7 +41,7 @@ def login():
         return redirect(auth_url)
     return redirect(url_for('camelotify'))
 
-@app.route('/camelotify', methods=POST) #directs to first page of camelotify
+@app.route('/camelotify', methods=["GET","POST"]) #directs to first page of camelotify
 def camelotify():
     if not log_check():
         return redirect(url_for('login'))
@@ -49,13 +49,27 @@ def camelotify():
     playlists_info = [(pl['name'], pl['id']) for pl in playlists]
     return render_template("camelotify.html", playlists=playlists_info)
 
-@app.route('/camelotify/selected', methods=POST)
+@app.route('/camelotify/selected', methods=["POST"])
 def camelotify_selected():
     if not log_check():
         return redirect(url_for('login'))
     playlist_id = request.form.get('playlist_id')
+
     return render_template("selected.html", playlist_id=playlist_id)
     
+@app.route('/camelotify/selected/copy')
+def camelotify_selected_copy():
+    if not log_check():
+        return redirect(url_for('login'))
+    playlist_id = request.form.get('playlist_id')
+    return render_template("copy.html")
+
+@app.route('/camelotify/selected/modify-same')
+def camelotify_selected_modify_same():
+    if not log_check():
+        return redirect(url_for('login'))
+    playlist_id = request.form.get('playlist_id')
+    return render_template("modify_same.html")
 
 
 @app.route('/callback')

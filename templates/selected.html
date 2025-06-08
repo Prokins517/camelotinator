@@ -3,3 +3,12 @@
 {% block body %}
 
 {{playlist_id}}
+<form action="{{ url_for('camelotify_selected_copy') }}" method="post">
+    <button type="submit">Copy and Modify the Copy</button>
+</form>
+
+<form action="{{ url_for('camelotify_selected_modify_same') }}" method="post">
+    <button type="submit">Modify the Same Playlist</button>
+</form>
+
+{% endblock %}
