@@ -3,7 +3,14 @@
 {% block body %}
 
 Camelotification happens here.
-
-{{playlists_list}}
+<ul>
+    {% for name, id in playlists %}
+        <li>{{name}} ({{id}})</li>
+        <form method="POST" action="{{ url_for('camelotify_selected') }}">
+                <input type="hidden" name="playlist_id" value="{{ id }}">
+                <button type="submit">Select</button>
+            </form>
+    {% endfor %}
+</ul>
 
 {% endblock %}

@@ -23,10 +23,6 @@ sp_oauth = SpotifyOAuth(
     show_dialog=True
 )
 
-def log_check():
-    token_info = cache_handler.get_cached_token()
-    return sp_oauth.validate_token(token_info)
-
 sp = Spotify(auth_manager=sp_oauth)
 
 @app.route('/')
@@ -45,20 +41,54 @@ def login():
         return redirect(auth_url)
     return redirect(url_for('camelotify'))
 
-@app.route('/camelotify')
+@app.route('/camelotify', methods=POST) #directs to first page of camelotify
 def camelotify():
     if not log_check():
         return redirect(url_for('login'))
-    playlists_list = sp.current_user_playlists
+    playlists = gather_playlists()
+    playlists_info = [(pl['name'], pl['id']) for pl in playlists]
+    return render_template("camelotify.html", playlists=playlists_info)
 
+@app.route('/camelotify/selected', methods=POST)
+def camelotify_selected():
+    if not log_check():
+        return redirect(url_for('login'))
+    playlist_id = request.form.get('playlist_id')
+    return render_template("selected.html", playlist_id=playlist_id)
+    
 
-
-    return render_template("camelotify.html")
 
 @app.route('/callback')
 def callback():
     sp_oauth.get_access_token(request.args['code'])
     return redirect(url_for('camelotify'))
+
+@app.route('/test-session')
+def test_session():
+    session['foo'] = 'bar'
+    return f"Session test: {session.get('foo')}"
+
+def log_check():
+    token_info = cache_handler.get_cached_token()
+    print("Cached token info:", token_info)
+    valid = sp_oauth.validate_token(token_info)
+    print("Is token valid?", valid)
+    return valid
+
+def gather_playlists(): #returns a list of all user playlists
+    playlists = []
+    limit = 50
+    offset = 0
+
+    while True:
+        response = sp.current_user_playlists(limit=limit, offset=offset)
+        items = response['items']
+        if not items:
+            break
+        playlists.extend(items)
+        offset += limit
+    return playlists
+
 
 if __name__ == '__main__':
     app.run(debug=True)
