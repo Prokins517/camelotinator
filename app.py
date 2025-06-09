@@ -61,10 +61,11 @@ def camelotify_selected():
 def camelotify_selected_copy():
     if not log_check():
         return redirect(url_for('login'))
+    user_id = sp.current_user()['id'] # Get User ID
     playlist_id = request.form.get('playlist_id')
-# retrieve details of playlist
-# create new playlist with almost identical details, only name different
-# modify that playlist with camelotification.
+    playlist_data = playlist_datagather(playlist_id) # retrieve details of playlist
+    sp.user_playlist_create(user=user_id, name='playlist_data["name"]', public=False, description='Camelotify made this playlist smooth like buttah. See [camelotify link here] for more details.')# create new playlist with almost identical details, only name different
+    # modify that playlist with camelotification.
     return render_template("copy.html")
 
 @app.route('/camelotify/selected/modify-same')
@@ -86,6 +87,18 @@ def test_session():
     return f"Session test: {session.get('foo')}"
 
 
+# helper functions
+def camelotify_algo(playlist_info): # Main code of application is here!!!
+    origin_tracks = playlist_info['tracks']
+    track_uris = [track['uri'] for track in origin_tracks]
+    trackdata = gather_audiofeats(track_uris)
+    # sort: for each trackdatum, sort with greedy algorithm. 
+        # start with a random track (marking as current)
+        # search for best fit among unsorted tracks
+        # mark that track as sorted, then mark the chosen track as current
+        # repeat until all tracks are sorted
+
+
 
 def log_check():
     token_info = cache_handler.get_cached_token()
@@ -93,6 +106,21 @@ def log_check():
     valid = sp_oauth.validate_token(token_info)
     print("Is token valid?", valid)
     return valid
+
+def calculate
+
+def gather_audiofeats(uri_list):
+    all_trackdata = []
+    offset = 0
+    limit = 100
+
+    while True:
+        response = sp.audio_features(uri_list, offset=offset, limit=limit)
+        trackdata = response
+        if not trackdata:
+            break
+        all_trackdata.extend(response)
+
 
 def playlist_datagather(playlist_uri):
     playlist_info = sp.playlist(playlist_uri) #get playlist info
@@ -104,8 +132,6 @@ def playlist_datagather(playlist_uri):
         'tracks': (playlist_trackgather(playlist_uri))
     }
     return data #return the dict.
-
-
 
 def playlist_trackgather(playlist_uri):
     all_tracks = []
@@ -125,7 +151,6 @@ def gather_playlists(): #returns a list of all user playlists
     playlists = []
     limit = 50
     offset = 0
-
     while True:
         response = sp.current_user_playlists(limit=limit, offset=offset)
         items = response['items']
@@ -135,6 +160,6 @@ def gather_playlists(): #returns a list of all user playlists
         offset += limit
     return playlists
 
-
+# app run code
 if __name__ == '__main__':
     app.run(debug=True)
