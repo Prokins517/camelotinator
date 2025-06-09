@@ -6,7 +6,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(64)  # Fixed typo: urandom not urarandom
+app.config['SECRET_KEY'] = os.urandom(64)  
 
 client_id = 'cba82416e2334bc99ac19671adbb9308'
 client_secret = '2bc032351c8c42df8eb629b19cf2896f'
@@ -62,6 +62,9 @@ def camelotify_selected_copy():
     if not log_check():
         return redirect(url_for('login'))
     playlist_id = request.form.get('playlist_id')
+# retrieve details of playlist
+# create new playlist with almost identical details, only name different
+# modify that playlist with camelotification.
     return render_template("copy.html")
 
 @app.route('/camelotify/selected/modify-same')
@@ -82,12 +85,41 @@ def test_session():
     session['foo'] = 'bar'
     return f"Session test: {session.get('foo')}"
 
+
+
 def log_check():
     token_info = cache_handler.get_cached_token()
     print("Cached token info:", token_info)
     valid = sp_oauth.validate_token(token_info)
     print("Is token valid?", valid)
     return valid
+
+def playlist_datagather(playlist_uri):
+    playlist_info = sp.playlist(playlist_uri) #get playlist info
+    images = (playlist_info['images']) #get playlist cover art
+    cover_url = images[0]['url'] if images else None #get cover art url
+    data = { #store in a dict
+        'name': playlist_info['name'],
+        'cover_url': cover_url,
+        'tracks': (playlist_trackgather(playlist_uri))
+    }
+    return data #return the dict.
+
+
+
+def playlist_trackgather(playlist_uri):
+    all_tracks = []
+    offset = 0
+    limit = 100
+
+    while True:
+        response = sp.playlist_items(playlist_uri, offset=offset, limit=limit)
+        items = response['items']
+        if not items:
+            break
+        all_tracks.extend(items)
+        offset += limit
+    return all_tracks
 
 def gather_playlists(): #returns a list of all user playlists
     playlists = []
