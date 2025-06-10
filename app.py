@@ -1,4 +1,5 @@
 import os
+import random
 from flask import Flask, render_template, request, session, redirect, url_for
 import spotipy
 from spotipy import Spotify
@@ -86,17 +87,37 @@ def test_session():
     session['foo'] = 'bar'
     return f"Session test: {session.get('foo')}"
 
+# Global Variables
+camelot_keys = [
+    "1A", "2A", "3A", "4A", "5A", "6A", "7A", "8A", "9A", "10A", "11A", "12A",
+    "1B", "2B", "3B", "4B", "5B", "6B", "7B", "8B", "9B", "10B", "11B", "12B"
+]
 
 # helper functions
-def camelotify_algo(playlist_info): # Main code of application is here!!!
+def camelotify_algo(playlist_info): # Main code of application is here!!! 
     origin_tracks = playlist_info['tracks']
     track_uris = [track['uri'] for track in origin_tracks]
-    trackdata = gather_audiofeats(track_uris)
-    # sort: for each trackdatum, sort with greedy algorithm. 
-        # start with a random track (marking as current)
-        # search for best fit among unsorted tracks
-        # mark that track as sorted, then mark the chosen track as current
-        # repeat until all tracks are sorted
+    audiofeats = gather_audiofeats(track_uris)
+    unsorted_trackdata = [
+        { #converting key and mode to camelot data, and storing all necessary data in a streamlined dict for looping
+            "camelot": camelot_keys[track['key'] + (12 if track['mode'] == 1 else 0)], 
+            "bpm": track['tempo'], 
+            "uri": track['uri']} 
+            for track in audiofeats
+        ]
+    sorted_track_uris = []
+    first_track = random.choice(unsorted_trackdata)
+    current_track = first_track
+    sorted_track_uris.append(first_track)
+
+    
+    for track in unsorted_trackdata:
+        next_track = nearest_track(current_track)
+        sorted_track_uris.append(next_track['uri'])
+        unsorted_trackdata.remove(current_track)
+        current_track = next_track
+    return sorted_track_uris # This returns a list of track URIs sorted.
+    
 
 
 
@@ -107,7 +128,30 @@ def log_check():
     print("Is token valid?", valid)
     return valid
 
-def calculate
+def nearest_track(current_track, unsorted_tracks):
+
+    matching_keys = [track for track in unsorted_tracks if track['camelot'] == current_track['camelot'] and track != current_track]
+    if not matching_keys:
+        matching_keys = compatible_key_tracks(current_track)
+    if not matching_keys:
+        #decide whether to return an error message or find next closest. This would be a disconnect that you dont want happening at all.
+        
+    matching_bpm = [track for track in matching_keys if track['bpm'] == current_track['bpm'] and track != current_track]
+    if not matching_bpm:
+        #find nearest bpm! use it!
+    # search unsorted list for identical keys
+        # if no identical, search unsorted list for compatible keys
+        # if still no identical, search for nearest incompatible key
+    # search from among selected key list for identical tempos
+        # if no identical, search selected key list for nearest
+    # The nearest tempo, compatible-key song (or nearest key) is the nearest. 
+
+def compatible_key_tracks(current_track):
+    # set up compatible key sorting here using your useful little camelot datapack table you set up before
+
+    
+    
+
 
 def gather_audiofeats(uri_list):
     all_trackdata = []
@@ -120,6 +164,7 @@ def gather_audiofeats(uri_list):
         if not trackdata:
             break
         all_trackdata.extend(response)
+        offset += limit
 
 
 def playlist_datagather(playlist_uri):
