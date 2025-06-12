@@ -108,12 +108,12 @@ def camelotify_algo(playlist_info): # Main code of application is here!!!
     sorted_track_uris = []
     first_track = random.choice(unsorted_trackdata)
     current_track = first_track
-    sorted_track_uris.append(first_track)
+    sorted_track_uris.append(first_track['uri'])
 
     
     for track in unsorted_trackdata:
-        next_track = nearest_track(current_track)
-        sorted_track_uris.append(next_track['uri'])
+        next_track = nearest_track(current_track, unsorted_trackdata)
+        sorted_track_uris.append(next_track)
         unsorted_trackdata.remove(current_track)
         current_track = next_track
     return sorted_track_uris # This returns a list of track URIs sorted.
@@ -129,28 +129,63 @@ def log_check():
     return valid
 
 def nearest_track(current_track, unsorted_tracks):
-
+    # Find compatible key songs
     matching_keys = [track for track in unsorted_tracks if track['camelot'] == current_track['camelot'] and track != current_track]
     if not matching_keys:
-        matching_keys = compatible_key_tracks(current_track)
-    if not matching_keys:
-        #decide whether to return an error message or find next closest. This would be a disconnect that you dont want happening at all.
-        
+        matching_keys = compatible_key_tracks(current_track, unsorted_tracks)
+    elif not matching_keys:
+        matching_keys = nearest_key_track(current_track, unsorted_tracks)
+
+        # Pick from compatibles using tempo
     matching_bpm = [track for track in matching_keys if track['bpm'] == current_track['bpm'] and track != current_track]
     if not matching_bpm:
-        #find nearest bpm! use it!
-    # search unsorted list for identical keys
-        # if no identical, search unsorted list for compatible keys
-        # if still no identical, search for nearest incompatible key
-    # search from among selected key list for identical tempos
-        # if no identical, search selected key list for nearest
-    # The nearest tempo, compatible-key song (or nearest key) is the nearest. 
+       nearest = min(matching_keys, key=lambda track: abs(track['bpm'] - current_track['bpm']))
+       return nearest['uri']
+    else:
+        choice = random.choice(matching_keys)
+        return choice['uri']
+   
 
-def compatible_key_tracks(current_track):
-    # set up compatible key sorting here using your useful little camelot datapack table you set up before
+def compatible_key_tracks(current_track, unsorted_tracks):
+    current_key = current_track['camelot']
+    
+    # Get mode and number from the key string
+    num = int(current_key[:-1])  
+    mode = current_key[-1]      
+    
+    # Calculate adjacent keys and parallel
+    prev_num = 12 if num == 1 else num - 1
+    next_num = 1 if num == 12 else num + 1
+    parallel_mode = 'B' if mode == 'A' else 'A'
+    
+    compatible_keys = [
+        f"{prev_num}{mode}",
+        f"{next_num}{mode}",
+        f"{num}{parallel_mode}"
+    ]
+    
+    # Return all tracks with a matching camelot key
+    return [
+        track for track in unsorted_tracks
+        if track['camelot'] in compatible_keys and track != current_track
+    ]
+    
 
-    
-    
+def nearest_key_track(current_track, unsorted_tracks):
+    current_key = current_track['camelot']
+    current_num = int(current_key[:-1])  # Extract Camelot number, e.g., 7 from '7A'
+
+    def camelot_distance(other_key):
+        other_num = int(other_key[:-1])
+        # Compute circular distance on the 12-hour Camelot wheel
+        return min(abs(current_num - other_num), 12 - abs(current_num - other_num))
+
+    # Find the track with the smallest key distance (excluding the current track)
+    nearest_track = min(
+        (track for track in unsorted_tracks if track != current_track),
+        key=lambda track: camelot_distance(track['camelot'])
+    )
+    return [nearest_track]  # Return a list for consistency with other methods
 
 
 def gather_audiofeats(uri_list):
