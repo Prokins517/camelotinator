@@ -2,12 +2,14 @@
 
 {% block body %}
 
-{{playlist_id}}
-<form action="{{ url_for('camelotify_selected_copy') }}" method="post">
-    <button type="submit">Copy and Modify the Copy</button>
+<img url="{{cover_art}}">
+<h1>{{playlist_name}}</h1>
+
+<form action="{{ url_for('camelotify_selected_copy') }}" method="POST">
+    <button type="submit">Copy and Modify the Playlist Copy</button>
 </form>
 
-<form action="{{ url_for('camelotify_selected_modify_same') }}" method="post">
+<form action="{{ url_for('camelotify_selected_modify_same') }}" method="POST">
     <button type="submit">Modify the Same Playlist</button>
 </form>
 

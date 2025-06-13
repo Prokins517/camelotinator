@@ -3,8 +3,16 @@ import random
 from flask import Flask, render_template, request, session, redirect, url_for
 import spotipy
 from spotipy import Spotify
+from spotipy import SpotifyException
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
+
+#TODO:
+# - Finish fleshing out html with proper variable handling in routes
+# - Create pretty but minimalistic html/css for each webpage
+# - Write up final helper functions for creating/modifing playlists using pagination for large changes
+# - Write in activation of your new helper functions for each 
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)  
@@ -30,11 +38,6 @@ sp = Spotify(auth_manager=sp_oauth)
 def index():
     return render_template("index.html")
 
-@app.route('/message', methods=["POST"])
-def message():
-    message = request.form.get("message", "You did not enter a message.")
-    return render_template("message.html", message=message)
-
 @app.route('/login')
 def login():
     if not log_check():
@@ -55,18 +58,20 @@ def camelotify_selected():
     if not log_check():
         return redirect(url_for('login'))
     playlist_id = request.form.get('playlist_id')
-
+    # save as cover_art the cover art
+    #save as playlist_name the name
+    # add each to the render template thing
     return render_template("selected.html", playlist_id=playlist_id)
     
-@app.route('/camelotify/selected/copy')
+@app.route('/camelotify/selected/copy', methods=["POST"])
 def camelotify_selected_copy():
     if not log_check():
         return redirect(url_for('login'))
     user_id = sp.current_user()['id'] # Get User ID
     playlist_id = request.form.get('playlist_id')
     playlist_data = playlist_datagather(playlist_id) # retrieve details of playlist
-    sp.user_playlist_create(user=user_id, name='playlist_data["name"]', public=False, description='Camelotify made this playlist smooth like buttah. See [camelotify link here] for more details.')# create new playlist with almost identical details, only name different
-    # modify that playlist with camelotification.
+    sp.user_playlist_create(user=user_id, name=playlist_data["name"] + " - Camelotified", public=False, description='Camelotify made this playlist smooth like buttah. See [camelotify link here] for more details.')# create new playlist with almost identical details, only name different
+    
     return render_template("copy.html")
 
 @app.route('/camelotify/selected/modify-same')
@@ -94,32 +99,6 @@ camelot_keys = [
 ]
 
 # helper functions
-def camelotify_algo(playlist_info): # Main code of application is here!!! 
-    origin_tracks = playlist_info['tracks']
-    track_uris = [track['uri'] for track in origin_tracks]
-    audiofeats = gather_audiofeats(track_uris)
-    unsorted_trackdata = [
-        { #converting key and mode to camelot data, and storing all necessary data in a streamlined dict for looping
-            "camelot": camelot_keys[track['key'] + (12 if track['mode'] == 1 else 0)], 
-            "bpm": track['tempo'], 
-            "uri": track['uri']} 
-            for track in audiofeats
-        ]
-    sorted_track_uris = []
-    first_track = random.choice(unsorted_trackdata)
-    current_track = first_track
-    sorted_track_uris.append(first_track['uri'])
-
-    
-    for track in unsorted_trackdata:
-        next_track = nearest_track(current_track, unsorted_trackdata)
-        sorted_track_uris.append(next_track)
-        unsorted_trackdata.remove(current_track)
-        current_track = next_track
-    return sorted_track_uris # This returns a list of track URIs sorted.
-    
-
-
 
 def log_check():
     token_info = cache_handler.get_cached_token()
@@ -128,15 +107,42 @@ def log_check():
     print("Is token valid?", valid)
     return valid
 
+
+def camelotify_algo(playlist_info): # Main code of application is here!!! 
+    origin_tracks = playlist_info['tracks']
+    track_uris = [track['uri'] for track in origin_tracks]
+    audiofeats = gather_audiofeats(track_uris)
+    unsorted_trackdata = [
+        { #converting key and mode to camelot data, and storing all necessary data in a lightweight dict for looping
+            "camelot": camelot_keys.index(camelot_keys[track['key'] + (12 if track['mode'] == 1 else 0)]), 
+            "bpm": track['tempo'], 
+            "uri": track['uri']} 
+            for track in audiofeats
+        ]
+    sorted_track_uris = []
+    first_track = random.choice(unsorted_trackdata)
+    current_track = first_track
+    sorted_track_uris.append(first_track['uri'])
+    unsorted_trackdata.remove(first_track)
+
+    
+    for track in unsorted_trackdata:
+        next_track = nearest_track(current_track, unsorted_trackdata)
+        sorted_track_uris.append(next_track)
+        unsorted_trackdata.remove(next_track)
+        current_track = next_track
+    return sorted_track_uris # This returns a list of track URIs sorted.
+    
+
 def nearest_track(current_track, unsorted_tracks):
     # Find compatible key songs
     matching_keys = [track for track in unsorted_tracks if track['camelot'] == current_track['camelot'] and track != current_track]
     if not matching_keys:
         matching_keys = compatible_key_tracks(current_track, unsorted_tracks)
-    elif not matching_keys:
+    if not matching_keys:
         matching_keys = nearest_key_track(current_track, unsorted_tracks)
 
-        # Pick from compatibles using tempo
+     # Pick from compatibles using tempo
     matching_bpm = [track for track in matching_keys if track['bpm'] == current_track['bpm'] and track != current_track]
     if not matching_bpm:
        nearest = min(matching_keys, key=lambda track: abs(track['bpm'] - current_track['bpm']))
@@ -158,12 +164,13 @@ def compatible_key_tracks(current_track, unsorted_tracks):
     next_num = 1 if num == 12 else num + 1
     parallel_mode = 'B' if mode == 'A' else 'A'
     
-    compatible_keys = [
+    #Assemble compatible keys list
+    compatible_keys = [ 
         f"{prev_num}{mode}",
         f"{next_num}{mode}",
         f"{num}{parallel_mode}"
     ]
-    
+
     # Return all tracks with a matching camelot key
     return [
         track for track in unsorted_tracks
@@ -193,13 +200,14 @@ def gather_audiofeats(uri_list):
     offset = 0
     limit = 100
 
-    while True:
+    while True: #accounts for pagination
         response = sp.audio_features(uri_list, offset=offset, limit=limit)
         trackdata = response
         if not trackdata:
             break
         all_trackdata.extend(response)
         offset += limit
+    return all_trackdata
 
 
 def playlist_datagather(playlist_uri):
@@ -213,12 +221,12 @@ def playlist_datagather(playlist_uri):
     }
     return data #return the dict.
 
-def playlist_trackgather(playlist_uri):
+def playlist_trackgather(playlist_uri): #returns a list of track objects: all tracks in the playlist
     all_tracks = []
     offset = 0
     limit = 100
 
-    while True:
+    while True: #accounts for pagination
         response = sp.playlist_items(playlist_uri, offset=offset, limit=limit)
         items = response['items']
         if not items:
@@ -231,7 +239,7 @@ def gather_playlists(): #returns a list of all user playlists
     playlists = []
     limit = 50
     offset = 0
-    while True:
+    while True: #accounts for pagination
         response = sp.current_user_playlists(limit=limit, offset=offset)
         items = response['items']
         if not items:
@@ -240,6 +248,6 @@ def gather_playlists(): #returns a list of all user playlists
         offset += limit
     return playlists
 
-# app run code
+# App run code
 if __name__ == '__main__':
     app.run(debug=True)
