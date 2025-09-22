@@ -1,14 +1,20 @@
 {% extends "layout.html" %}
 
 {% block body %}
-        This is the index page.
-        <form action="/message" method="post">
-        <input autocomplete="off" autofocus name="message" type="text" placeholder="Enter message here.">
-        <button type="submit" >Send</button> 
-        </form>
+        [This is the index page]. Put a cool graphic here
 
-        <form action="/login" method="post">
-                <input autocomplete="off" autofocus name="login useless" type="text" placeholder="uhh login here uselessly"
-                <button type="submit">Go Login</button>
-        </form>
+        <header><h1> Make Those Playlists Smooth Like Buttah.</h1></header>
+        <main> 
+                
+                The Camelotinator tool is a simple web app designed to make the song transitions seamless in all your favorite Spotify playlists.
+                Using Spotify's own web API and some incredible open-source tools and libraries, Camelotinator is designed to give you an easy and effective playlist arrangment that greatly enhances Spotify's new Mix feature.
+                Interested? Then what are you waiting for? Head on down to the Camelotify button below to get started! 
+                <b> Note: you will have to login to Spotify so Camelotinator can see (and if you prefer, copy) and re-arrange your playlists.</b>
+
+
+                <form action="/login" method="post">
+                        <input autocomplete="off" autofocus name="login useless" type="text" placeholder="uhh login here uselessly"
+                        <button type="submit">Go Login</button>
+                </form>
+        </main>
 {% endblock %}
