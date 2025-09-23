@@ -53,7 +53,7 @@ def camelotify():
     playlists_info = [(pl['name'], pl['id']) for pl in playlists]
     return render_template("camelotify.html", playlists=playlists_info)
 
-@app.route('/camelotify/selected', methods=["POST"])
+@app.route('/camelotify/selected', methods=["GET","POST"])
 def camelotify_selected():
     if not log_check():
         return redirect(url_for('login'))
@@ -63,7 +63,7 @@ def camelotify_selected():
     # add each to the render template thing
     return render_template("selected.html", playlist_id=playlist_id)
     
-@app.route('/camelotify/selected/copy', methods=["POST"])
+@app.route('/camelotify/selected/copy', methods=["GET","POST"])
 def camelotify_selected_copy():
     if not log_check():
         return redirect(url_for('login'))
@@ -74,7 +74,7 @@ def camelotify_selected_copy():
     
     return render_template("copy.html")
 
-@app.route('/camelotify/selected/modify-same')
+@app.route('/camelotify/selected/modify-same', methods=["GET","POST"])
 def camelotify_selected_modify_same():
     if not log_check():
         return redirect(url_for('login'))
@@ -109,8 +109,8 @@ def log_check():
 
 
 def camelotify_algo(playlist_info): # Main code of application is here!!! 
-    origin_tracks = playlist_info['tracks']
-    track_uris = [track['uri'] for track in origin_tracks]
+    origin_tracks = playlist_info['tracks'] # Gets the list of tracks from the playlist
+    track_uris = [track['uri'] for track in origin_tracks] # gets the list of uri's from the list of track objects
     audiofeats = gather_audiofeats(track_uris)
     unsorted_trackdata = [
         { #converting key and mode to camelot data, and storing all necessary data in a lightweight dict for looping

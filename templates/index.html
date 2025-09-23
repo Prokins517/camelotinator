@@ -12,9 +12,8 @@
                 <b> Note: you will have to login to Spotify so Camelotinator can see (and if you prefer, copy) and re-arrange your playlists.</b>
 
 
-                <form action="/login" method="post">
-                        <input autocomplete="off" autofocus name="login useless" type="text" placeholder="uhh login here uselessly"
-                        <button type="submit">Go Login</button>
-                </form>
+                <p> 
+                        <a href="{{ url_for('camelotify') }}" class="btn">Camelotify now!</a>
+                </p>
         </main>
 {% endblock %}
